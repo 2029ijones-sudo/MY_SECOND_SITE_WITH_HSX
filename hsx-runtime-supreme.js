@@ -1,7 +1,1564 @@
 // hsx-runtime-supreme.js — HSX v4.0+ SUPREME EDITION
 // © 2026-2027 William Isaiah Jones + HSXEngine + QuantumSyntax + NeuralOS
 // COMPLETE COMMAND SYNTHESIS - EVERY COMMAND FROM BOTH FILES + ENHANCED VERSIONS
+// ==================== COMPLETE HSX CLASSES (WORKING VERSION) ====================
 
+class HSXSyntaxParser {
+    constructor() {
+        this.patterns = new Map();
+        this.specialTokens = new Map();
+        this._initPatterns();
+        this._initSpecialTokens();
+    }
+    
+    _initPatterns() {
+        // Updated patterns to match actual HSX syntax
+        this.patterns.set('command', /^hsx(?::\w+)?(?:\s+(.*))?$/);
+        this.patterns.set('quantum_command', /^\|⟩\s*(.+?)\s*⟨\|$/);
+        this.patterns.set('neural_command', /^🧠\s*\[(.+?)\]$/);
+        this.patterns.set('reality_command', /^🌀\s*\[(.+?)\]$/);
+        this.patterns.set('time_command', /^⏳\s*\[(.+?)\]$/);
+        this.patterns.set('dimension_command', /^📐\s*\[(.+?)\]$/);
+        this.patterns.set('variable', /^\$([\w.]+)(?:\[(.+?)\])?$/);
+        this.patterns.set('number', /^-?\d+(?:\.\d+)?(?:e[-+]?\d+)?$/i);
+        this.patterns.set('string', /^"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'$/);
+        this.patterns.set('assignment', /^([\w$@&]+)\s*=\s*(.+)$/);
+        this.patterns.set('js_block', /^\{js/);
+        this.patterns.set('py_block', /^\{py/);
+        this.patterns.set('hsx_block', /^\{hsx/);
+        this.patterns.set('quantum_block', /^\{quantum/);
+        this.patterns.set('neural_block', /^\{neural/);
+        this.patterns.set('reality_block', /^\{reality/);
+        this.patterns.set('time_block', /^\{time/);
+        this.patterns.set('dimension_block', /^\{dimension/);
+        this.patterns.set('funny_block', /^\(funny\)/);
+        this.patterns.set('hsx_paren', /^\(hsx\)/);
+        this.patterns.set('bots_database', /^bots:/);
+        this.patterns.set('hsx_storage', /^:Hsx:/);
+        this.patterns.set('cccl', /^CCCL/);
+        this.patterns.set('emotion', /^(:\)|:\(|;\)|;\(|\{:}|\)\.\(\:)/);
+        this.patterns.set('enhanced_command', /^hsx:([\w:]+)(?:\s+(.*))?$/);
+        this.patterns.set('legacy_command', /^hsx\s+(\w+)(?:\s+(.*))?$/);
+    }
+    
+    _initSpecialTokens() {
+        // Same as original
+        this.specialTokens.set('|0⟩', 'qubit_zero');
+        this.specialTokens.set('|1⟩', 'qubit_one');
+        this.specialTokens.set('|+⟩', 'qubit_plus');
+        this.specialTokens.set('|-⟩', 'qubit_minus');
+        this.specialTokens.set('⟨ψ|', 'bra_psi');
+        this.specialTokens.set('|ψ⟩', 'ket_psi');
+        this.specialTokens.set('🧠', 'neural');
+        this.specialTokens.set('⚡', 'activation');
+        this.specialTokens.set('🌀', 'reality');
+        this.specialTokens.set('🌌', 'dimension');
+        this.specialTokens.set('⏳', 'time');
+        this.specialTokens.set('⌛', 'time_reverse');
+        this.specialTokens.set('📐', 'dimension');
+        this.specialTokens.set('⚛️', 'quantum');
+        this.specialTokens.set('🧩', 'component');
+        this.specialTokens.set('✨', 'render');
+        this.specialTokens.set('📎', 'attach');
+        this.specialTokens.set('🔒', 'security');
+        this.specialTokens.set('📦', 'modules');
+        this.specialTokens.set('🤖', 'bots');
+        this.specialTokens.set('💾', 'storage');
+        this.specialTokens.set('📝', 'cccl');
+        this.specialTokens.set('🧬', 'language');
+        this.specialTokens.set('🎮', 'game');
+        this.specialTokens.set('📊', 'data');
+        this.specialTokens.set('🔧', 'function');
+        this.specialTokens.set('🧱', 'block');
+        this.patterns.set('🔄', 'reload');
+        this.patterns.set('🎯', 'spawn');
+        this.patterns.set('⏱️', 'fps');
+        this.patterns.set('🏷️', 'jaytags');
+        this.specialTokens.set('😊', 'emotion_happy');
+        this.specialTokens.set('😢', 'emotion_sad');
+        this.specialTokens.set('😉', 'emotion_wink');
+        this.specialTokens.set('😭', 'emotion_cry');
+        this.specialTokens.set('😐', 'emotion_neutral');
+        this.specialTokens.set('😕', 'emotion_confused');
+    }
+    
+    parse(line, context = {}) {
+        line = line.trim();
+        
+        if (!line) {
+            return { type: 'empty', value: '' };
+        }
+        
+        // Check for special tokens first (exact match)
+        for (const [token, type] of this.specialTokens) {
+            if (line === token || line.startsWith(token)) {
+                return { 
+                    type: 'special', 
+                    token: type, 
+                    value: token,
+                    original: line 
+                };
+            }
+        }
+        
+        // Check for patterns in priority order
+        const priorityPatterns = [
+            'enhanced_command',
+            'legacy_command',
+            'command',
+            'quantum_command',
+            'neural_command',
+            'reality_command',
+            'time_command',
+            'dimension_command',
+            'assignment',
+            'variable',
+            'number',
+            'string'
+        ];
+        
+        for (const patternType of priorityPatterns) {
+            const pattern = this.patterns.get(patternType);
+            if (pattern) {
+                const match = line.match(pattern);
+                if (match) {
+                    const result = { 
+                        type: patternType, 
+                        match: match.slice(1), 
+                        context, 
+                        original: line 
+                    };
+                    
+                    // Add enhanced parsing for specific types
+                    if (patternType === 'enhanced_command') {
+                        result.command = match[1];
+                        result.args = match[2] || '';
+                        result.enhanced = true;
+                    } else if (patternType === 'legacy_command' || patternType === 'command') {
+                        result.command = match[1];
+                        result.args = match[2] || '';
+                        result.enhanced = false;
+                    }
+                    
+                    return result;
+                }
+            }
+        }
+        
+        // Check for block starts
+        const blockPatterns = [
+            'js_block', 'py_block', 'hsx_block', 'quantum_block',
+            'neural_block', 'reality_block', 'time_block', 'dimension_block'
+        ];
+        
+        for (const blockType of blockPatterns) {
+            const pattern = this.patterns.get(blockType);
+            if (pattern && line.match(pattern)) {
+                const blockMatch = line.match(/^\{(\w+)/);
+                return {
+                    type: 'block_start',
+                    blockType: blockMatch ? blockMatch[1] : blockType.replace('_block', ''),
+                    original: line
+                };
+            }
+        }
+        
+        // Check for other patterns
+        for (const [type, pattern] of this.patterns) {
+            if (!priorityPatterns.includes(type) && !blockPatterns.includes(type)) {
+                const match = line.match(pattern);
+                if (match) {
+                    return { 
+                        type, 
+                        match: match.slice(1), 
+                        context, 
+                        original: line 
+                    };
+                }
+            }
+        }
+        
+        // Fallback to literal
+        return { type: 'literal', value: line };
+    }
+    
+    tokenize(code) {
+        const lines = code.split('\n');
+        const tokens = [];
+        let inBlock = false;
+        let blockType = '';
+        let blockContent = [];
+        let blockStartLine = 0;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            
+            if (inBlock) {
+                if (line === '}') {
+                    tokens.push({
+                        type: 'block_end',
+                        blockType: blockType,
+                        content: blockContent.join('\n'),
+                        line: blockStartLine + 1,
+                        endLine: i + 1
+                    });
+                    inBlock = false;
+                    blockType = '';
+                    blockContent = [];
+                } else {
+                    blockContent.push(line);
+                }
+                continue;
+            }
+            
+            // Check for block start
+            const blockMatch = line.match(/^\{(\w+)/);
+            if (blockMatch && line.match(/\{$/)) {
+                inBlock = true;
+                blockType = blockMatch[1];
+                blockStartLine = i;
+                tokens.push({
+                    type: 'block_start',
+                    blockType: blockType,
+                    line: i + 1
+                });
+                continue;
+            }
+            
+            // Parse regular line
+            if (line) {
+                const token = this.parse(line);
+                token.line = i + 1;
+                tokens.push(token);
+            }
+        }
+        
+        // Handle unterminated block
+        if (inBlock) {
+            tokens.push({
+                type: 'block_end',
+                blockType: blockType,
+                content: blockContent.join('\n'),
+                line: blockStartLine + 1,
+                endLine: lines.length,
+                incomplete: true
+            });
+        }
+        
+        return tokens;
+    }
+    
+    // Helper method for runtime integration
+    extractCommand(line) {
+        const token = this.parse(line);
+        if (token.type === 'enhanced_command' || token.type === 'legacy_command' || token.type === 'command') {
+            const fullCommand = token.enhanced ? `hsx:${token.command}` : `hsx ${token.command}`;
+            return {
+                fullCommand,
+                args: token.args,
+                enhanced: token.enhanced || false
+            };
+        }
+        return null;
+    }
+}
+
+class HSXCompiler {
+    constructor(runtime = null, options = {}) {
+        this.runtime = runtime;
+        this.options = { 
+            optimize: true, 
+            minify: false, 
+            quantum: false,
+            neural: false,
+            reality: false,
+            ...options 
+        };
+        this.ast = null;
+        this.bytecode = [];
+        this.symbolTable = new Map();
+        this.optimizations = new Map();
+        this._initOptimizations();
+    }
+    
+    _initOptimizations() {
+        this.optimizations.set('constant_folding', true);
+        this.optimizations.set('dead_code_elimination', true);
+        this.optimizations.set('inline_expansion', true);
+        this.optimizations.set('loop_unrolling', true);
+        this.optimizations.set('quantum_optimization', this.options.quantum);
+        this.optimizations.set('neural_optimization', this.options.neural);
+    }
+    
+    compile(code, context = {}) {
+        console.log('🔧 Compiling HSX code...');
+        
+        const parser = new HSXSyntaxParser();
+        const tokens = parser.tokenize(code);
+        
+        this.ast = {
+            type: 'program',
+            body: [],
+            context,
+            metadata: { 
+                lines: code.split('\n').length, 
+                tokens: tokens.length,
+                compiled: Date.now(),
+                options: this.options
+            }
+        };
+        
+        // Build AST from tokens
+        let i = 0;
+        while (i < tokens.length) {
+            const token = tokens[i];
+            
+            switch (token.type) {
+                case 'enhanced_command':
+                case 'legacy_command':
+                case 'command':
+                    const node = this._parseCommand(token);
+                    this.ast.body.push(node);
+                    break;
+                    
+                case 'block_start':
+                    // Handle block as single node
+                    const blockToken = tokens[++i]; // Should be block_end
+                    if (blockToken && blockToken.type === 'block_end') {
+                        const blockNode = this._parseBlock(blockToken);
+                        this.ast.body.push(blockNode);
+                    }
+                    break;
+                    
+                case 'block_end':
+                    // Already handled with block_start
+                    break;
+                    
+                case 'assignment':
+                    this.ast.body.push(this._parseAssignment(token));
+                    break;
+                    
+                case 'literal':
+                    this.ast.body.push({
+                        type: 'literal',
+                        value: token.value,
+                        line: token.line
+                    });
+                    break;
+                    
+                case 'special':
+                    this.ast.body.push({
+                        type: 'special',
+                        token: token.token,
+                        value: token.value,
+                        line: token.line
+                    });
+                    break;
+                    
+                default:
+                    this.ast.body.push({
+                        type: 'unknown',
+                        value: token.original || token.value,
+                        line: token.line
+                    });
+            }
+            
+            i++;
+        }
+        
+        if (this.options.optimize) {
+            this._optimizeAST();
+        }
+        
+        this._buildSymbolTable();
+        this.bytecode = this._generateBytecode();
+        
+        console.log(`🔧 Compilation complete: ${this.bytecode.length} instructions`);
+        
+        return {
+            ast: this.ast,
+            bytecode: this.bytecode,
+            symbols: this.symbolTable,
+            stats: { 
+                instructions: this.bytecode.length, 
+                symbols: this.symbolTable.size,
+                tokens: tokens.length
+            }
+        };
+    }
+    
+    _parseCommand(token) {
+        return {
+            type: 'command',
+            command: token.command || token.match[0],
+            args: token.args || token.match[1] || '',
+            enhanced: token.enhanced || false,
+            line: token.line,
+            source: token.original
+        };
+    }
+    
+    _parseBlock(token) {
+        return {
+            type: 'block',
+            blockType: token.blockType,
+            content: token.content,
+            line: token.line,
+            endLine: token.endLine
+        };
+    }
+    
+    _parseAssignment(token) {
+        return {
+            type: 'assignment',
+            variable: token.match[0],
+            value: token.match[1],
+            line: token.line
+        };
+    }
+    
+    _optimizeAST() {
+        console.log('🔧 Optimizing AST...');
+        
+        const optimizedBody = [];
+        
+        for (const node of this.ast.body) {
+            // Constant folding for literals
+            if (node.type === 'literal' && this._isNumeric(node.value)) {
+                node.optimized = true;
+                node.value = Number(node.value);
+            }
+            
+            // Dead code elimination for empty commands
+            if (node.type === 'command' && !node.command && !node.args) {
+                continue; // Skip empty commands
+            }
+            
+            // Inline expansion for simple commands
+            if (node.type === 'command' && node.command === 'help' && !node.args) {
+                // Expand help command
+                optimizedBody.push({
+                    type: 'command',
+                    command: 'help',
+                    args: 'all',
+                    expanded: true,
+                    line: node.line
+                });
+                continue;
+            }
+            
+            optimizedBody.push(node);
+        }
+        
+        this.ast.body = optimizedBody;
+        this.ast.metadata.optimized = true;
+        
+        console.log(`🔧 AST optimized: ${optimizedBody.length} nodes`);
+    }
+    
+    _isNumeric(str) {
+        if (typeof str === 'number') return true;
+        if (typeof str !== 'string') return false;
+        return !isNaN(str) && !isNaN(parseFloat(str));
+    }
+    
+    _buildSymbolTable() {
+        this.symbolTable.clear();
+        
+        for (const node of this.ast.body) {
+            if (node.type === 'assignment') {
+                this.symbolTable.set(node.variable, {
+                    type: 'variable',
+                    value: node.value,
+                    line: node.line
+                });
+            } else if (node.type === 'command') {
+                // Register command as symbol
+                this.symbolTable.set(`cmd:${node.command}`, {
+                    type: 'command',
+                    args: node.args,
+                    line: node.line,
+                    enhanced: node.enhanced
+                });
+            } else if (node.type === 'block') {
+                this.symbolTable.set(`block:${node.blockType}`, {
+                    type: 'block',
+                    content: node.content,
+                    line: node.line
+                });
+            }
+        }
+        
+        console.log(`🔧 Symbol table built: ${this.symbolTable.size} symbols`);
+    }
+    
+    _generateBytecode() {
+        const bytecode = [];
+        
+        for (const node of this.ast.body) {
+            switch (node.type) {
+                case 'command':
+                    if (node.enhanced) {
+                        bytecode.push(['CMD_ENHANCED', node.command, node.args || '']);
+                    } else {
+                        bytecode.push(['CMD', node.command, node.args || '']);
+                    }
+                    break;
+                    
+                case 'assignment':
+                    bytecode.push(['STORE', node.variable, node.value]);
+                    break;
+                    
+                case 'block':
+                    bytecode.push(['BLOCK_START', node.blockType]);
+                    
+                    // Compile block content recursively if it's HSX code
+                    if (node.blockType === 'hsx' || node.blockType === 'quantum' || 
+                        node.blockType === 'neural' || node.blockType === 'reality') {
+                        const subCompiler = new HSXCompiler(this.runtime, this.options);
+                        const subResult = subCompiler.compile(node.content);
+                        bytecode.push(['BLOCK_CONTENT', subResult.bytecode.length]);
+                        bytecode.push(...subResult.bytecode);
+                    } else {
+                        // For JS/Python blocks, just store the content
+                        bytecode.push(['BLOCK_CONTENT', 0]);
+                        bytecode.push(['BLOCK_RAW', node.content]);
+                    }
+                    bytecode.push(['BLOCK_END', node.blockType]);
+                    break;
+                    
+                case 'special':
+                    bytecode.push(['SPECIAL', node.token, node.value]);
+                    break;
+                    
+                case 'literal':
+                    bytecode.push(['LITERAL', node.value]);
+                    break;
+                    
+                default:
+                    bytecode.push(['NOOP', node.type]);
+            }
+        }
+        
+        // Add optimization markers if enabled
+        if (this.options.optimize) {
+            bytecode.unshift(['OPTIMIZE', 'enabled']);
+        }
+        
+        // Add program metadata
+        bytecode.unshift(['PROGRAM_INFO', this.ast.metadata.lines, this.ast.metadata.tokens]);
+        
+        return bytecode;
+    }
+    
+    compileToString(code) {
+        const result = this.compile(code);
+        return JSON.stringify(result, null, 2);
+    }
+    
+    // Method to integrate with HSXRuntime
+    compileForRuntime(code, context = {}) {
+        const result = this.compile(code, context);
+        
+        // Prepare for runtime execution
+        const runtimeBytecode = result.bytecode.map(instr => ({
+            opcode: instr[0],
+            operands: instr.slice(1),
+            original: instr
+        }));
+        
+        return {
+            ...result,
+            runtimeBytecode,
+            execute: async (runtime) => {
+                const interpreter = new HSXInterpreter(runtime);
+                return await interpreter.execute(runtimeBytecode, context);
+            }
+        };
+    }
+}
+
+class HSXInterpreter {
+    constructor(runtime) {
+        this.runtime = runtime;
+        this.stack = [];
+        this.variables = new Map();
+        this.callStack = [];
+        this.pc = 0;
+        this.running = false;
+        this.bytecode = [];
+        this.context = {};
+        this.breakpoints = new Set();
+        this.blockStack = [];
+        
+        this.operations = new Map([
+            ['PROGRAM_INFO', this._executeProgramInfo.bind(this)],
+            ['OPTIMIZE', this._executeOptimize.bind(this)],
+            ['CMD', this._executeCommand.bind(this)],
+            ['CMD_ENHANCED', this._executeEnhancedCommand.bind(this)],
+            ['STORE', this._executeStore.bind(this)],
+            ['BLOCK_START', this._executeBlockStart.bind(this)],
+            ['BLOCK_CONTENT', this._executeBlockContent.bind(this)],
+            ['BLOCK_RAW', this._executeBlockRaw.bind(this)],
+            ['BLOCK_END', this._executeBlockEnd.bind(this)],
+            ['SPECIAL', this._executeSpecial.bind(this)],
+            ['LITERAL', this._executeLiteral.bind(this)],
+            ['NOOP', () => {}]
+        ]);
+    }
+    
+    async execute(bytecode, context = {}) {
+        console.log('🚀 Executing HSX bytecode...');
+        
+        this.bytecode = bytecode;
+        this.context = context;
+        this.pc = 0;
+        this.running = true;
+        this.variables.clear();
+        this.stack = [];
+        this.callStack = [];
+        this.blockStack = [];
+        
+        let instructionCount = 0;
+        let startTime = performance.now();
+        
+        while (this.running && this.pc < this.bytecode.length) {
+            // Check breakpoints
+            if (this.breakpoints.has(this.pc)) {
+                console.log(`⏸️ Breakpoint hit at instruction ${this.pc}`);
+                await this._debugBreak();
+            }
+            
+            const instruction = this.bytecode[this.pc];
+            await this._executeInstruction(instruction);
+            
+            instructionCount++;
+            this.pc++;
+            
+            // Safety limit
+            if (instructionCount > 10000) {
+                console.error('⚠️ Execution limit exceeded');
+                this.running = false;
+                break;
+            }
+        }
+        
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        
+        console.log(`✅ Execution completed: ${instructionCount} instructions in ${executionTime.toFixed(2)}ms`);
+        
+        return {
+            success: this.running,
+            instructions: instructionCount,
+            executionTime,
+            stack: this.stack.slice(),
+            variables: Object.fromEntries(this.variables),
+            context: this.context
+        };
+    }
+    
+    async _executeInstruction(instruction) {
+        const opcode = instruction.opcode;
+        const operands = instruction.operands || [];
+        
+        if (this.operations.has(opcode)) {
+            try {
+                await this.operations.get(opcode)(operands);
+            } catch (error) {
+                console.error(`❌ Error executing ${opcode}:`, error);
+                this.running = false;
+                throw error;
+            }
+        } else {
+            console.warn(`⚠️ Unknown opcode: ${opcode}`);
+        }
+    }
+    
+    async _executeProgramInfo(operands) {
+        const [lines, tokens] = operands;
+        console.log(`📊 Program info: ${lines} lines, ${tokens} tokens`);
+    }
+    
+    async _executeCommand(operands) {
+        const [command, args] = operands;
+        
+        // Build the command string that matches runtime registry
+        const commandStr = `hsx ${command}`;
+        const enhancedCommandStr = `hsx:${command}`;
+        
+        if (this.runtime && this.runtime.commandRegistry) {
+            // Try exact match first
+            if (this.runtime.commandRegistry.has(commandStr)) {
+                const handler = this.runtime.commandRegistry.get(commandStr);
+                await handler(args || '');
+                return;
+            }
+            
+            // Try enhanced version
+            if (this.runtime.commandRegistry.has(enhancedCommandStr)) {
+                const handler = this.runtime.commandRegistry.get(enhancedCommandStr);
+                await handler(args || '');
+                return;
+            }
+            
+            // Try partial match
+            for (const [cmd, handler] of this.runtime.commandRegistry) {
+                if (cmd.includes(command)) {
+                    await handler(args || '');
+                    return;
+                }
+            }
+        }
+        
+        // Fallback: execute via runtime's runHSXEngineLine
+        if (this.runtime && this.runtime.runHSXEngineLine) {
+            const line = commandStr + (args ? ` ${args}` : '');
+            await this.runtime.runHSXEngineLine(line, [], 0);
+        } else {
+            console.log(`Command: ${command}, Args: ${args}`);
+        }
+    }
+    
+    async _executeEnhancedCommand(operands) {
+        const [command, args] = operands;
+        
+        // Enhanced command execution
+        const commandStr = `hsx:${command}`;
+        const enhancedArgs = this._expandVariables(args);
+        
+        if (this.runtime && this.runtime.commandRegistry) {
+            // Try exact match
+            if (this.runtime.commandRegistry.has(commandStr)) {
+                const handler = this.runtime.commandRegistry.get(commandStr);
+                await handler(enhancedArgs);
+                return;
+            }
+            
+            // Try partial match
+            for (const [cmd, handler] of this.runtime.commandRegistry) {
+                if (cmd.includes(command) || cmd.includes(commandStr)) {
+                    await handler(enhancedArgs);
+                    return;
+                }
+            }
+        }
+        
+        // Fallback to regular command
+        await this._executeCommand(operands);
+    }
+    
+    async _executeStore(operands) {
+        const [variable, value] = operands;
+        const expandedValue = this._expandVariables(value);
+        
+        this.variables.set(variable, expandedValue);
+        
+        // Also store in runtime if available
+        if (this.runtime) {
+            this.runtime.dataMap.set(variable, expandedValue);
+            this.runtime.data[variable] = expandedValue;
+            
+            // Also store in context if it looks like a component
+            if (variable.startsWith('component_') || variable.includes('_component')) {
+                this.runtime.componentsMap.set(variable, expandedValue);
+                this.runtime.components[variable] = expandedValue;
+            }
+        }
+        
+        console.log(`💾 Stored: ${variable} = ${expandedValue}`);
+    }
+    
+    async _executeBlockStart(operands) {
+        const [blockType] = operands;
+        console.log(`🚀 Starting ${blockType} block`);
+        
+        // Push to call stack
+        this.blockStack.push({
+            type: 'block',
+            blockType,
+            startPc: this.pc,
+            content: []
+        });
+    }
+    
+    async _executeBlockContent(operands) {
+        const [contentLength] = operands;
+        console.log(`📦 Block content: ${contentLength} instructions`);
+        
+        if (this.blockStack.length > 0) {
+            const currentBlock = this.blockStack[this.blockStack.length - 1];
+            currentBlock.contentLength = contentLength;
+        }
+    }
+    
+    async _executeBlockRaw(operands) {
+        const [content] = operands;
+        
+        if (this.blockStack.length > 0) {
+            const currentBlock = this.blockStack[this.blockStack.length - 1];
+            
+            // Execute block content based on type
+            switch (currentBlock.blockType) {
+                case 'js':
+                    await this._executeJSBlock(content);
+                    break;
+                case 'py':
+                    await this._executePythonBlock(content);
+                    break;
+                case 'hsx':
+                    await this._executeHSXBlock(content);
+                    break;
+                case 'quantum':
+                    await this._executeQuantumBlock(content);
+                    break;
+                case 'neural':
+                    await this._executeNeuralBlock(content);
+                    break;
+                case 'reality':
+                    await this._executeRealityBlock(content);
+                    break;
+                default:
+                    console.log(`📦 Executing ${currentBlock.blockType} block`);
+            }
+        }
+    }
+    
+    async _executeBlockEnd(operands) {
+        const [blockType] = operands;
+        console.log(`🏁 Ending ${blockType} block`);
+        
+        // Pop from call stack
+        if (this.blockStack.length > 0) {
+            const block = this.blockStack.pop();
+            
+            // Execute any remaining content
+            if (block.content && block.content.length > 0) {
+                const content = block.content.join('\n');
+                await this._executeBlockRaw([content]);
+            }
+        }
+    }
+    
+    async _executeJSBlock(content) {
+        if (this.runtime && this.runtime._runJS) {
+            await this.runtime._runJS(content, true);
+        } else {
+            try {
+                new Function(content)();
+                console.log("💻 JS block executed");
+            } catch (e) {
+                console.error("❌ JS block error:", e);
+            }
+        }
+    }
+    
+    async _executePythonBlock(content) {
+        if (this.runtime && this.runtime._runPy) {
+            await this.runtime._runPy(content);
+        } else {
+            console.log("🐍 Python block (Pyodide not available)");
+        }
+    }
+    
+    async _executeHSXBlock(content) {
+        if (this.runtime) {
+            await this.runtime.execute(content);
+        } else {
+            console.log("🌀 HSX block executed");
+        }
+    }
+    
+    async _executeQuantumBlock(content) {
+        if (this.runtime && this.runtime._runQuantumBlock) {
+            await this.runtime._runQuantumBlock(content);
+        } else {
+            console.log("⚛️ Quantum block executed");
+        }
+    }
+    
+    async _executeNeuralBlock(content) {
+        if (this.runtime && this.runtime._runNeuralBlock) {
+            await this.runtime._runNeuralBlock(content);
+        } else {
+            console.log("🧠 Neural block executed");
+        }
+    }
+    
+    async _executeRealityBlock(content) {
+        if (this.runtime && this.runtime._runRealityBlock) {
+            await this.runtime._runRealityBlock(content);
+        } else {
+            console.log("🌀 Reality block executed");
+        }
+    }
+    
+    async _executeSpecial(operands) {
+        const [token, value] = operands;
+        console.log(`✨ Special token: ${token} = ${value}`);
+        
+        // Handle special tokens
+        switch (token) {
+            case 'qubit_zero':
+                if (this.runtime && this.runtime.quantumMode) {
+                    this.stack.push({ type: 'qubit', value: '|0⟩' });
+                }
+                break;
+                
+            case 'qubit_one':
+                if (this.runtime && this.runtime.quantumMode) {
+                    this.stack.push({ type: 'qubit', value: '|1⟩' });
+                }
+                break;
+                
+            case 'neural':
+                if (this.runtime && this.runtime.neuralNetwork) {
+                    this.stack.push({ type: 'neural', value: '🧠' });
+                }
+                break;
+                
+            case 'reality':
+                this.stack.push({ type: 'reality', value: '🌀' });
+                break;
+                
+            case 'time':
+                this.stack.push({ type: 'time', value: '⏳' });
+                break;
+                
+            case 'dimension':
+                this.stack.push({ type: 'dimension', value: '📐' });
+                break;
+                
+            default:
+                // Check if runtime has a handler for this special token
+                if (this.runtime && this.runtime.commandRegistry) {
+                    const specialCommand = `special:${token}`;
+                    for (const [cmd, handler] of this.runtime.commandRegistry) {
+                        if (cmd.includes(token) || cmd.includes(value)) {
+                            await handler('');
+                            break;
+                        }
+                    }
+                }
+        }
+    }
+    
+    async _executeLiteral(operands) {
+        const [value] = operands;
+        this.stack.push(value);
+    }
+    
+    async _executeOptimize(operands) {
+        const [status] = operands;
+        console.log(`⚡ Optimization: ${status}`);
+    }
+    
+    _expandVariables(str) {
+        if (typeof str !== 'string') return str;
+        
+        // Replace variables like $name or ${name}
+        return str.replace(/\$(\w+)|(?:\$\{(\w+)\})/g, (match, p1, p2) => {
+            const varName = p1 || p2;
+            return this.variables.get(varName) || match;
+        });
+    }
+    
+    async _debugBreak() {
+        console.log('⏸️ Execution paused at breakpoint');
+        
+        // Create a simple break dialog
+        const breakDialog = document.createElement('div');
+        breakDialog.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 20px;
+            border: 2px solid #ff9900;
+            border-radius: 10px;
+            z-index: 10000;
+            min-width: 300px;
+        `;
+        
+        breakDialog.innerHTML = `
+            <h3>⏸️ HSX Debug Breakpoint</h3>
+            <p>PC: ${this.pc}</p>
+            <p>Stack: ${JSON.stringify(this.stack)}</p>
+            <button id="continue-btn" style="margin: 10px; padding: 10px 20px; background: #00aa00; color: white; border: none; border-radius: 5px;">Continue</button>
+            <button id="step-btn" style="margin: 10px; padding: 10px 20px; background: #0088ff; color: white; border: none; border-radius: 5px;">Step</button>
+        `;
+        
+        document.body.appendChild(breakDialog);
+        
+        return new Promise((resolve) => {
+            document.getElementById('continue-btn').onclick = () => {
+                breakDialog.remove();
+                resolve();
+            };
+            
+            document.getElementById('step-btn').onclick = () => {
+                breakDialog.remove();
+                resolve();
+            };
+        });
+    }
+    
+    setBreakpoint(pc) {
+        this.breakpoints.add(pc);
+    }
+    
+    clearBreakpoint(pc) {
+        this.breakpoints.delete(pc);
+    }
+    
+    step() {
+        if (this.pc < this.bytecode.length) {
+            const instruction = this.bytecode[this.pc];
+            this._executeInstruction(instruction);
+            this.pc++;
+            return { pc: this.pc, instruction };
+        }
+        return null;
+    }
+    
+    getState() {
+        return {
+            pc: this.pc,
+            stack: this.stack.slice(),
+            variables: Object.fromEntries(this.variables),
+            callStack: this.blockStack.slice(),
+            running: this.running,
+            breakpoints: Array.from(this.breakpoints)
+        };
+    }
+}
+
+class HSXOptimizer {
+    constructor(options = {}) {
+        this.options = {
+            quantum: false,
+            neural: false,
+            reality: false,
+            aggressive: false,
+            ...options
+        };
+        
+        this.passes = [];
+        this._initOptimizationPasses();
+    }
+    
+    _initOptimizationPasses() {
+        this.passes.push({
+            name: 'constant_folding',
+            apply: this._constantFolding.bind(this)
+        });
+        
+        this.passes.push({
+            name: 'dead_code_elimination',
+            apply: this._deadCodeElimination.bind(this)
+        });
+        
+        this.passes.push({
+            name: 'inline_expansion',
+            apply: this._inlineExpansion.bind(this)
+        });
+        
+        if (this.options.quantum) {
+            this.passes.push({
+                name: 'quantum_optimization',
+                apply: this._quantumOptimization.bind(this)
+            });
+        }
+        
+        if (this.options.neural) {
+            this.passes.push({
+                name: 'neural_optimization',
+                apply: this._neuralOptimization.bind(this)
+            });
+        }
+        
+        if (this.options.reality) {
+            this.passes.push({
+                name: 'reality_optimization',
+                apply: this._realityOptimization.bind(this)
+            });
+        }
+        
+        if (this.options.aggressive) {
+            this.passes.push({
+                name: 'loop_unrolling',
+                apply: this._loopUnrolling.bind(this)
+            });
+            
+            this.passes.push({
+                name: 'function_inlining',
+                apply: this._functionInlining.bind(this)
+            });
+        }
+    }
+    
+    optimize(ast) {
+        console.log('⚡ Optimizing HSX code...');
+        
+        let optimizedAst = JSON.parse(JSON.stringify(ast)); // Deep clone
+        let changes = 0;
+        
+        for (const pass of this.passes) {
+            console.log(`  Applying ${pass.name}...`);
+            const result = pass.apply(optimizedAst);
+            optimizedAst = result.ast;
+            changes += result.changes;
+        }
+        
+        console.log(`⚡ Optimization complete: ${changes} changes applied`);
+        
+        return {
+            ast: optimizedAst,
+            changes,
+            passes: this.passes.length,
+            options: this.options
+        };
+    }
+    
+    _constantFolding(ast) {
+        let changes = 0;
+        
+        const traverse = (node) => {
+            if (!node) return;
+            
+            // Fold numeric literals
+            if (node.type === 'literal' && this._isNumeric(node.value)) {
+                node.value = Number(node.value);
+                node.optimized = true;
+                changes++;
+            }
+            
+            // Fold simple expressions in command arguments
+            if (node.type === 'command' && node.args) {
+                // Check for simple arithmetic in args
+                const simpleExpr = node.args.match(/^(\d+)\s*([+\-*/])\s*(\d+)$/);
+                if (simpleExpr) {
+                    const [, left, op, right] = simpleExpr;
+                    const result = this._evaluateExpression(Number(left), op, Number(right));
+                    node.args = result.toString();
+                    node.optimized = true;
+                    changes++;
+                }
+                
+                // Fold variable references
+                const varMatch = node.args.match(/\$(\w+)/);
+                if (varMatch && ast.symbols) {
+                    const varName = varMatch[1];
+                    if (ast.symbols[varName] && ast.symbols[varName].type === 'constant') {
+                        node.args = node.args.replace(new RegExp(`\\$${varName}`, 'g'), ast.symbols[varName].value);
+                        changes++;
+                    }
+                }
+            }
+            
+            // Recurse
+            if (node.body && Array.isArray(node.body)) {
+                node.body.forEach(traverse);
+            }
+            if (node.content && typeof node.content === 'string') {
+                // Check for constants in block content
+                const lines = node.content.split('\n');
+                const optimizedLines = lines.map(line => {
+                    // Simple constant replacement in blocks
+                    const varMatch = line.match(/\$(\w+)/);
+                    if (varMatch && ast.symbols) {
+                        const varName = varMatch[1];
+                        if (ast.symbols[varName] && ast.symbols[varName].type === 'constant') {
+                            return line.replace(new RegExp(`\\$${varName}`, 'g'), ast.symbols[varName].value);
+                        }
+                    }
+                    return line;
+                });
+                
+                if (optimizedLines.some((line, i) => line !== lines[i])) {
+                    node.content = optimizedLines.join('\n');
+                    changes++;
+                }
+            }
+        };
+        
+        traverse(ast);
+        
+        return { ast, changes };
+    }
+    
+    _deadCodeElimination(ast) {
+        let changes = 0;
+        const optimizedBody = [];
+        
+        for (const node of ast.body) {
+            // Skip empty or no-op nodes
+            if (node.type === 'empty') {
+                changes++;
+                continue;
+            }
+            
+            // Skip comments (if parsed as literals)
+            if (node.type === 'literal' && node.value.startsWith('//')) {
+                changes++;
+                continue;
+            }
+            
+            // Skip unreachable code after return/break
+            if (node.type === 'command' && (node.command === 'return' || node.command === 'break')) {
+                optimizedBody.push(node);
+                // Mark that subsequent nodes are dead code
+                changes += ast.body.length - (ast.body.indexOf(node) + 1);
+                break;
+            }
+            
+            optimizedBody.push(node);
+        }
+        
+        ast.body = optimizedBody;
+        
+        return { ast, changes };
+    }
+    
+    _inlineExpansion(ast) {
+        let changes = 0;
+        
+        // Build function map
+        const functions = new Map();
+        for (const node of ast.body) {
+            if (node.type === 'command' && node.command === 'function') {
+                const match = node.args.match(/^(\w+)\s+(.+)$/);
+                if (match) {
+                    functions.set(match[1], match[2]);
+                }
+            }
+        }
+        
+        // Replace function calls with inline code
+        for (const node of ast.body) {
+            if (node.type === 'command' && functions.has(node.command)) {
+                const funcBody = functions.get(node.command);
+                // Simple inline expansion
+                node.type = 'literal';
+                node.value = funcBody;
+                node.inlined = true;
+                changes++;
+            }
+        }
+        
+        return { ast, changes };
+    }
+    
+    _quantumOptimization(ast) {
+        let changes = 0;
+        
+        // Optimize quantum operations
+        // - Combine sequential quantum gates
+        // - Remove redundant measurements
+        
+        const traverse = (node) => {
+            if (!node) return;
+            
+            if (node.type === 'command' && node.command.includes('quantum')) {
+                // Mark for quantum optimization
+                node.quantumOptimized = true;
+                changes++;
+                
+                // Optimize quantum arguments
+                if (node.args && node.args.includes('|0⟩|0⟩')) {
+                    node.args = node.args.replace('|0⟩|0⟩', '|00⟩');
+                    changes++;
+                }
+            }
+            
+            if (node.body && Array.isArray(node.body)) {
+                node.body.forEach(traverse);
+            }
+            
+            if (node.content && typeof node.content === 'string') {
+                // Optimize quantum notation in block content
+                const optimizedContent = node.content
+                    .replace(/H\s+H/g, 'I') // Hadamard twice is identity
+                    .replace(/X\s+X/g, 'I'); // Pauli-X twice is identity
+                
+                if (optimizedContent !== node.content) {
+                    node.content = optimizedContent;
+                    changes++;
+                }
+            }
+        };
+        
+        traverse(ast);
+        
+        return { ast, changes };
+    }
+    
+    _neuralOptimization(ast) {
+        let changes = 0;
+        
+        // Optimize neural operations
+        // - Batch similar operations
+        // - Remove redundant activations
+        
+        return { ast, changes };
+    }
+    
+    _realityOptimization(ast) {
+        let changes = 0;
+        
+        // Optimize reality operations
+        // - Combine reality layers
+        // - Remove redundant paradox checks
+        
+        return { ast, changes };
+    }
+    
+    _loopUnrolling(ast) {
+        let changes = 0;
+        
+        // Simple loop unrolling for small, fixed loops
+        for (const node of ast.body) {
+            if (node.type === 'command' && node.command === 'loop') {
+                const match = node.args.match(/^(\d+)\s+(.+)$/);
+                if (match) {
+                    const count = parseInt(match[1]);
+                    const body = match[2];
+                    
+                    if (count <= 5) { // Unroll small loops
+                        const unrolled = [];
+                        for (let i = 0; i < count; i++) {
+                            unrolled.push({
+                                type: 'command',
+                                command: 'execute',
+                                args: body,
+                                line: node.line
+                            });
+                        }
+                        
+                        // Replace loop with unrolled version
+                        const loopIndex = ast.body.indexOf(node);
+                        ast.body.splice(loopIndex, 1, ...unrolled);
+                        changes++;
+                    }
+                }
+            }
+        }
+        
+        return { ast, changes };
+    }
+    
+    _functionInlining(ast) {
+        let changes = 0;
+        
+        // Inline small function calls
+        // This is already partially handled by _inlineExpansion
+        
+        return { ast, changes };
+    }
+    
+    _isNumeric(str) {
+        if (typeof str === 'number') return true;
+        if (typeof str !== 'string') return false;
+        return !isNaN(str) && !isNaN(parseFloat(str));
+    }
+    
+    _evaluateExpression(left, op, right) {
+        switch (op) {
+            case '+': return left + right;
+            case '-': return left - right;
+            case '*': return left * right;
+            case '/': return left / right;
+            default: return 0;
+        }
+    }
+    
+    optimizeBytecode(bytecode) {
+        console.log('⚡ Optimizing bytecode...');
+        
+        const optimized = [];
+        let changes = 0;
+        
+        for (let i = 0; i < bytecode.length; i++) {
+            const instruction = bytecode[i];
+            const [opcode, ...operands] = instruction;
+            
+            // Remove NOOP instructions
+            if (opcode === 'NOOP') {
+                changes++;
+                continue;
+            }
+            
+            // Combine consecutive STORE operations to same variable
+            if (opcode === 'STORE' && i + 1 < bytecode.length) {
+                const nextInstruction = bytecode[i + 1];
+                const [nextOp, ...nextOperands] = nextInstruction;
+                
+                if (nextOp === 'STORE' && operands[0] === nextOperands[0]) {
+                    // Same variable being stored twice - keep the last one
+                    changes++;
+                    continue;
+                }
+            }
+            
+            // Combine consecutive LITERAL pushes
+            if (opcode === 'LITERAL' && i + 1 < bytecode.length) {
+                const nextInstruction = bytecode[i + 1];
+                const [nextOp, ...nextOperands] = nextInstruction;
+                
+                if (nextOp === 'LITERAL') {
+                    // Combine literals into array
+                    optimized.push(['LITERAL_ARRAY', operands[0], nextOperands[0]]);
+                    i++; // Skip next instruction
+                    changes++;
+                    continue;
+                }
+            }
+            
+            // Remove redundant BLOCK_CONTENT with zero length
+            if (opcode === 'BLOCK_CONTENT' && operands[0] === 0) {
+                changes++;
+                continue;
+            }
+            
+            optimized.push(instruction);
+        }
+        
+        console.log(`⚡ Bytecode optimized: ${changes} instructions removed`);
+        
+        return {
+            bytecode: optimized,
+            changes,
+            originalLength: bytecode.length,
+            optimizedLength: optimized.length,
+            reduction: bytecode.length > 0 ? ((changes / bytecode.length) * 100).toFixed(1) + '%' : '0%'
+        };
+    }
+    
+    // Method to optimize code for runtime
+    optimizeForRuntime(code, options = {}) {
+        const parser = new HSXSyntaxParser();
+        const tokens = parser.tokenize(code);
+        
+        // Simple AST construction
+        const ast = {
+            type: 'program',
+            body: tokens.map(token => {
+                if (token.type === 'enhanced_command' || token.type === 'legacy_command' || token.type === 'command') {
+                    return {
+                        type: 'command',
+                        command: token.command || token.match?.[0] || '',
+                        args: token.args || token.match?.[1] || '',
+                        line: token.line
+                    };
+                }
+                return { type: token.type, value: token.original || token.value, line: token.line };
+            }),
+            symbols: {}
+        };
+        
+        // Apply optimizations
+        const optimized = this.optimize(ast);
+        
+        // Convert back to code
+        const optimizedCode = optimized.ast.body.map(node => {
+            if (node.type === 'command') {
+                const prefix = node.enhanced ? 'hsx:' : 'hsx ';
+                return `${prefix}${node.command}${node.args ? ' ' + node.args : ''}`;
+            }
+            return node.value || '';
+        }).join('\n');
+        
+        return {
+            original: code,
+            optimized: optimizedCode,
+            changes: optimized.changes,
+            stats: {
+                originalLines: code.split('\n').length,
+                optimizedLines: optimizedCode.split('\n').length,
+                reduction: ((code.length - optimizedCode.length) / code.length * 100).toFixed(1) + '%'
+            }
+        };
+    }
+}
+
+// ==================== INTEGRATION WITH HSXRUNTIME ====================
+
+// Add these classes to the HSXRuntime
+if (typeof HSXRuntime !== 'undefined') {
+    // Make classes available globally
+    window.HSXSyntaxParser = HSXSyntaxParser;
+    window.HSXCompiler = HSXCompiler;
+    window.HSXInterpreter = HSXInterpreter;
+    window.HSXOptimizer = HSXOptimizer;
+    
+    // Add compiler instance to HSXRuntime
+    HSXRuntime.prototype.createCompiler = function(options = {}) {
+        return new HSXCompiler(this, {
+            quantum: this.quantumMode,
+            neural: this.neuralNetwork !== null,
+            reality: this.realityLayers > 1,
+            ...options
+        });
+    };
+    
+    HSXRuntime.prototype.createOptimizer = function(options = {}) {
+        return new HSXOptimizer({
+            quantum: this.quantumMode,
+            neural: this.neuralNetwork !== null,
+            reality: this.realityLayers > 1,
+            ...options
+        });
+    };
+    
+    HSXRuntime.prototype.compileHSX = function(code, options = {}) {
+        const compiler = this.createCompiler(options);
+        return compiler.compileForRuntime(code);
+    };
+    
+    HSXRuntime.prototype.optimizeHSX = function(code, options = {}) {
+        const optimizer = this.createOptimizer(options);
+        return optimizer.optimizeForRuntime(code);
+    };
+    
+    HSXRuntime.prototype.executeCompiled = async function(compiledResult) {
+        if (compiledResult && compiledResult.execute) {
+            return await compiledResult.execute(this);
+        }
+        return null;
+    };
+}
+
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        HSXSyntaxParser,
+        HSXCompiler,
+        HSXInterpreter,
+        HSXOptimizer
+    };
+}
+
+// Auto-initialize if in browser
+if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', () => {
+        console.log('🌀 HSX Classes loaded successfully');
+        
+        // Create global instances if needed
+        if (!window.hsxParser) {
+            window.hsxParser = new HSXSyntaxParser();
+        }
+        
+        if (!window.hsxCompiler) {
+            window.hsxCompiler = new HSXCompiler();
+        }
+        
+        if (!window.hsxOptimizer) {
+            window.hsxOptimizer = new HSXOptimizer();
+        }
+    });
+}
 export class HSXRuntime {
   constructor(config = {}) {
     // ==================== SUPREME CORE ====================
